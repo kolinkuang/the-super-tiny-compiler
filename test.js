@@ -4,7 +4,7 @@ const {
   transformer,
   codeGenerator,
   compiler,
-} = require('./my-demo2');
+} = require('./my-demo');
 const assert = require('assert');
 
 const input  = '(add 2 (subtract 4 2))';

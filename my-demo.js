@@ -7,8 +7,8 @@
 */
 
 // Parsing: Taking raw code and turning it into a more abstract representation of the code.
-    // Lexical Analysis to token by tokenizer
-    // Syntactic Analysis to Abstract Syntax Tree
+// Lexical Analysis to token by tokenizer
+// Syntactic Analysis to Abstract Syntax Tree
 // Transformation: Takes this abstract representation and manipulates to do whatever the compiler wants it to.
 // Code Generation: Takes the transformed representation of the code and turns it into new code.
 
@@ -153,7 +153,7 @@ function tokenizer(input) {
 
         if (char === '"') {
             let value = '';
-            char  = input[++current];
+            char = input[++current];
             while (char !== '"') {
                 value += char;
                 char = input[++current];
@@ -249,9 +249,7 @@ function transformer(ast) {
     function traverser(ast, visitor) {
 
         function traverseArray(array, parent) {
-            array.forEach(child => {
-                traverseNode(child, parent);
-            });
+            array.forEach(child => traverseNode(child, parent));
         }
 
         function traverseNode(node, parent) {
@@ -261,7 +259,7 @@ function transformer(ast) {
                 methods.enter(node, parent);
             }
 
-            switch(node.type) {
+            switch (node.type) {
                 case 'Program':
                     traverseArray(node.body, node);
                     break;
@@ -275,9 +273,9 @@ function transformer(ast) {
                     throw new TypeError(node.type);
             }
 
-            if (methods && methods.exit) {
-                methods.exit(node, parent);
-            }
+            // if (methods && methods.exit) {
+            //     methods.exit(node, parent);
+            // }
         }
 
         traverseNode(ast, null);
@@ -338,7 +336,7 @@ function transformer(ast) {
 }
 
 function codeGenerator(node) {
-    switch(node.type) {
+    switch (node.type) {
         case 'Program':
             return node.body.map(codeGenerator)
                 .join('\n');

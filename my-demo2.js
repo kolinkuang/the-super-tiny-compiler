@@ -9,11 +9,11 @@ const RegexPattern = {
 };
 
 /**
-Input LISP statement:
-(add 2 (subtract 4 2))
+ Input LISP statement:
+ (add 2 (subtract 4 2))
 
-Output Tokens:
-[
+ Output Tokens:
+ [
  { type: 'paren',  value: '('        },
  { type: 'name',   value: 'add'      },
  { type: 'number', value: '2'        },
@@ -23,19 +23,22 @@ Output Tokens:
  { type: 'number', value: '2'        },
  { type: 'paren',  value: ')'        },
  { type: 'paren',  value: ')'        },
-]
-**/
+ ]
+ **/
 function _tokenizer(input) {
 
     const NumbersRegExp = new RegExp(RegexPattern.Numbers);
     const LettersRegExp = new RegExp(RegexPattern.Letters);
 
     const TokenizerMap = {
-        [RegexPattern.WhiteSpace]: ({current, tokens}) => ({
-            current: ++current,
-            tokens
-        }),
-        [RegexPattern.Parentheses]: ({char, current, tokens}) => {
+        [RegexPattern.WhiteSpace]({current, tokens}) {
+            return {
+                current: ++current,
+                tokens
+            }
+        },
+
+        [RegexPattern.Parentheses]({char, current, tokens}) {
             tokens.push({
                 type: 'paren',
                 value: char
@@ -45,7 +48,8 @@ function _tokenizer(input) {
                 tokens
             };
         },
-        [RegexPattern.Numbers]: ({char, current, tokens}) => {
+
+        [RegexPattern.Numbers]({char, current, tokens}) {
             let value = '';
             while (NumbersRegExp.test(char)) {
                 value += char;
@@ -60,7 +64,8 @@ function _tokenizer(input) {
                 tokens
             };
         },
-        [RegexPattern.Letters]: ({char, current, tokens}) => {
+
+        [RegexPattern.Letters]({char, current, tokens}) {
             let value = '';
             while (LettersRegExp.test(char)) {
                 value += char;
@@ -133,10 +138,8 @@ function _tokenizer(input) {
 }
  **/
 function _parser(tokens) {
-    let current = 0;
-
     const ParserMap = {
-        [RegexPattern.Numbers]: token => {
+        [RegexPattern.Numbers](token) {
             current++;
             return {
                 type: 'NumberLiteral',
@@ -144,7 +147,7 @@ function _parser(tokens) {
             };
         },
 
-        [RegexPattern.LeftParenthesis]: token => {
+        [RegexPattern.LeftParenthesis](token) {
             token = tokens[++current];
             let node = {
                 type: 'CallExpression',
@@ -162,6 +165,8 @@ function _parser(tokens) {
         }
     };
 
+    let current = 0;
+
     function _walk() {
         let token = tokens[current];
         let foundPattern = Object.keys(ParserMap).find(pattern => new RegExp(pattern).test(token.value + ''));
@@ -176,7 +181,7 @@ function _parser(tokens) {
         body: []
     };
 
-    while(current < tokens.length) {
+    while (current < tokens.length) {
         ast.body.push(_walk());
     }
 
@@ -185,9 +190,9 @@ function _parser(tokens) {
 
 /**
  ----------------------------------------------------------------------------
-   Input AST                        |   Output AST
+ Input AST                        |   Output AST
  ----------------------------------------------------------------------------
-   {                                |   {
+ {                                |   {
      type: 'Program',               |     type: 'Program',
      body: [{                       |     body: [{
        type: 'CallExpression',      |       type: 'ExpressionStatement',
@@ -221,18 +226,39 @@ function _parser(tokens) {
  **/
 function _transformer(ast) {
 
+    const TransformerMap = {
+        NumberLiteral: {
+            enter(node, parent) {
+
+            }
+        },
+
+        CallExpression: {
+            enter(node, parent) {
+
+            }
+        }
+    };
+
     function _traverser(ast, visitor) {
 
     }
 
+    let newAst = {
+        type: 'Program',
+        body: []
+    };
 
+    ast._context = newAst.body;
 
-    return null;
+    _traverser(ast, TransformerMap);
+
+    return newAst;
 }
 
 /**
  Input Transformed AST:
-{
+ {
   type: 'Program',
   body: [{
     type: 'ExpressionStatement',
