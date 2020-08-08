@@ -4,7 +4,7 @@ const {
   transformer,
   codeGenerator,
   compiler,
-} = require('./my-demo');
+} = require('./my-demo2');
 const assert = require('assert');
 
 const input  = '(add 2 (subtract 4 2))';
@@ -75,10 +75,10 @@ const newAst = {
   }]
 };
 
-// assert.deepStrictEqual(JSON.stringify(tokenizer(input)), JSON.stringify(tokens), 'Tokenizer should turn `input` string into `tokens` array');
-// assert.deepStrictEqual(JSON.stringify(parser(tokens)), JSON.stringify(ast), 'Parser should turn `tokens` array into `ast`');
+assert.deepStrictEqual(JSON.stringify(tokenizer(input)), JSON.stringify(tokens), 'Tokenizer should turn `input` string into `tokens` array');
+assert.deepStrictEqual(JSON.stringify(parser(tokens)), JSON.stringify(ast), 'Parser should turn `tokens` array into `ast`');
 assert.deepStrictEqual(JSON.stringify(transformer(ast)), JSON.stringify(newAst), 'Transformer should turn `ast` into a `newAst`');
-// assert.deepStrictEqual(JSON.stringify(codeGenerator(newAst)), JSON.stringify(output), 'Code Generator should turn `newAst` into `output` string');
-// assert.deepStrictEqual(JSON.stringify(compiler(input)), JSON.stringify(output), 'Compiler should turn `input` into `output`');
+assert.deepStrictEqual(JSON.stringify(codeGenerator(newAst)), JSON.stringify(output), 'Code Generator should turn `newAst` into `output` string');
+assert.deepStrictEqual(JSON.stringify(compiler(input)), JSON.stringify(output), 'Compiler should turn `input` into `output`');
 
 console.log('All Passed!');

@@ -139,16 +139,16 @@ function _tokenizer(input) {
  **/
 function _parser(tokens) {
     const ParserMap = {
-        [RegexPattern.Numbers](token) {
+        [RegexPattern.Numbers]({value}) {
             current++;
             return {
                 type: 'NumberLiteral',
-                value: token.value
+                value
             };
         },
 
-        [RegexPattern.LeftParenthesis](token) {
-            token = tokens[++current];
+        [RegexPattern.LeftParenthesis]() {
+            let token = tokens[++current];
             let node = {
                 type: 'CallExpression',
                 name: token.value,
@@ -203,7 +203,7 @@ function _parser(tokens) {
        }, {                         |           name: 'add'
          type: 'CallExpression',    |         },
          name: 'subtract',          |         arguments: [{
-         params: [{                 |           type: 'NumberLiteral',
+         params: [{                 |           type: '3',
            type: 'NumberLiteral',   |           value: '2'
            value: '4'               |         }, {
          }, {                       |           type: 'CallExpression',
@@ -226,22 +226,68 @@ function _parser(tokens) {
  **/
 function _transformer(ast) {
 
-    const TransformerMap = {
+    const TransformVisitor = {
         NumberLiteral: {
-            enter(node, parent) {
-
+            enter({value}, parent) {
+                parent._context.push({
+                    type: 'NumberLiteral',
+                    value
+                });
             }
         },
 
         CallExpression: {
             enter(node, parent) {
+                let expression = {
+                    type: 'CallExpression',
+                    callee: {
+                        type: 'Identifier',
+                        name: node.name
+                    },
+                    arguments: []
+                };
 
+                // why set it up with _context?
+                node._context = expression.arguments;
+
+                if (parent.type !== 'CallExpression') {
+                    expression = {
+                        type: 'ExpressionStatement',
+                        expression
+                    };
+                }
+
+                // why set it up with _context?
+                parent._context.push(expression);
             }
         }
     };
 
-    function _traverser(ast, visitor) {
+    const TraverseVisitor = {
+        Program(node) {
+            _traverseArray(node.body, node);
+        },
+        CallExpression(node) {
+            _traverseArray(node.params, node);
+        },
+        NumberLiteral(node) {}
+    };
 
+    function _traverseNode(node, parent) {
+        // 访问者模式
+        let {enter} = TransformVisitor[node.type] || {};
+        let traverse = TraverseVisitor[node.type];
+
+        if (typeof enter === 'function') {
+            enter(node, parent);
+        }
+        if (typeof traverse === 'function') {
+            traverse(node);
+        }
+    }
+
+    function _traverseArray(array, parent) {
+        array.forEach(child => _traverseNode(child, parent));
     }
 
     let newAst = {
@@ -251,7 +297,7 @@ function _transformer(ast) {
 
     ast._context = newAst.body;
 
-    _traverser(ast, TransformerMap);
+    _traverseNode(ast, null);
 
     return newAst;
 }
@@ -292,8 +338,27 @@ function _transformer(ast) {
  Output C statement:
  add(2, subtract(4, 2))
  **/
-function _codeGenerator(newAst) {
+function _codeGenerator(node) {
 
+    const GeneratorMap = {
+        Program(node) {
+            return node.body.map(_codeGenerator).join('\n');
+        },
+        ExpressionStatement(node) {
+            return _codeGenerator(node.expression) + ';';
+        },
+        CallExpression(node) {
+            return [_codeGenerator(node.callee), '(', node.arguments.map(_codeGenerator).join(', '), ')'].join('');
+        },
+        Identifier(node) {
+            return node.name;
+        },
+        NumberLiteral(node) {
+            return node.value;
+        }
+    };
+
+    return GeneratorMap[node.type](node);
 }
 
 /** Wrapped Functions **/
@@ -307,7 +372,7 @@ function tokenizer(input) {
 }
 
 function parser(tokens) {
-    let ast = _tokenizer(tokens);
+    let ast = _parser(tokens);
     return transformerFn => transformerFn && transformerFn(ast);
 }
 
